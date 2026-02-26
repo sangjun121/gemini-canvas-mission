@@ -337,47 +337,80 @@
         }
 
         function populateBoard(count) {
-            let tileTypes = [];
+            let pairTypes = [];
             const numPairs = count / 2;
             for (let i = 0; i < numPairs; i++) {
-                const emoji = EMOJIS[i % EMOJIS.length];
-                tileTypes.push(emoji, emoji);
+                pairTypes.push(EMOJIS[i % EMOJIS.length]);
             }
+            placePairsSolvably(pairTypes, false);
+        }
 
+        // 데드락 방지를 위한 '역방향 생성(Reverse Generation)' 알고리즘
+        function placePairsSolvably(pairTypes, preserveShape) {
+            let maxRetries = 150;
+            let originalShape = [];
+            
             for (let y = 1; y <= rows; y++) {
                 for (let x = 1; x <= cols; x++) {
-                    if (tileTypes.length > 0) {
-                        board[y][x] = tileTypes.pop();
-                    } else {
-                        board[y][x] = 0;
+                    if (!preserveShape || board[y][x] !== 0) {
+                        originalShape.push({x, y});
                     }
                 }
             }
 
-            shuffleInternalBoard();
-        }
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                // 공간 비우기
+                for (let p of originalShape) {
+                    board[p.y][p.x] = 0;
+                }
 
-        function shuffleInternalBoard() {
-            let activeTiles = [];
-            for (let y = 1; y <= rows; y++) {
-                for (let x = 1; x <= cols; x++) {
-                    if (board[y][x] !== 0) activeTiles.push(board[y][x]);
+                let pairsToPlace = [...pairTypes];
+                pairsToPlace.sort(() => Math.random() - 0.5);
+
+                let success = true;
+                let filledCells = new Set();
+
+                for (let tile of pairsToPlace) {
+                    let availableCells = originalShape.filter(p => !filledCells.has(`${p.x},${p.y}`));
+                    let validPairs = [];
+
+                    for (let c1 = 0; c1 < availableCells.length; c1++) {
+                        for (let c2 = c1 + 1; c2 < availableCells.length; c2++) {
+                            let p1 = availableCells[c1];
+                            let p2 = availableCells[c2];
+                            // 빈 공간들끼리 서로 연결되는지 확인
+                            if (findPath(p1.x, p1.y, p2.x, p2.y) !== null) {
+                                validPairs.push([p1, p2]);
+                            }
+                        }
+                    }
+
+                    if (validPairs.length === 0) {
+                        success = false;
+                        break;
+                    }
+
+                    let chosenPair = validPairs[Math.floor(Math.random() * validPairs.length)];
+                    board[chosenPair[0].y][chosenPair[0].x] = tile;
+                    board[chosenPair[1].y][chosenPair[1].x] = tile;
+                    filledCells.add(`${chosenPair[0].x},${chosenPair[0].y}`);
+                    filledCells.add(`${chosenPair[1].x},${chosenPair[1].y}`);
+                }
+
+                if (success) {
+                    return true;
                 }
             }
             
-            for (let i = activeTiles.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [activeTiles[i], activeTiles[j]] = [activeTiles[j], activeTiles[i]];
+            console.warn("완벽한 쌍 배치를 실패했습니다. 랜덤 배치로 전환합니다.");
+            let activeTiles = [];
+            for(let p of pairTypes) { activeTiles.push(p, p); }
+            activeTiles.sort(() => Math.random() - 0.5);
+            let idx = 0;
+            for(let p of originalShape) {
+                board[p.y][p.x] = activeTiles[idx++];
             }
-
-            let index = 0;
-            for (let y = 1; y <= rows; y++) {
-                for (let x = 1; x <= cols; x++) {
-                    if (board[y][x] !== 0) {
-                        board[y][x] = activeTiles[index++];
-                    }
-                }
-            }
+            return false;
         }
 
         function renderBoard() {
@@ -408,7 +441,27 @@
 
         function shuffleRemaining() {
             if (isProcessing || tilesRemaining === 0) return;
-            shuffleInternalBoard();
+            
+            let remainingCounts = {};
+            for (let y = 1; y <= rows; y++) {
+                for (let x = 1; x <= cols; x++) {
+                    let t = board[y][x];
+                    if (t !== 0) {
+                        remainingCounts[t] = (remainingCounts[t] || 0) + 1;
+                    }
+                }
+            }
+            
+            let pairTypes = [];
+            for (let t in remainingCounts) {
+                let pairs = remainingCounts[t] / 2;
+                for (let i = 0; i < pairs; i++) {
+                    pairTypes.push(t);
+                }
+            }
+            
+            // 기존 타일 모양(Shape)을 유지한 채 100% 해결 가능한 상태로 재배치
+            placePairsSolvably(pairTypes, true);
             
             for (let y = 1; y <= rows; y++) {
                 for (let x = 1; x <= cols; x++) {

@@ -2,7 +2,7 @@
 ## 카테고리: 게임
 
 ### 배포 링크
-[우아한 퍼즐 바로가기](https://gemini.google.com/share/655e396be569)
+[우아한 퍼즐 바로가기](https://gemini.google.com/share/8b10a4481c31)
 
 ### 이 앱을 만든 이유
 - 어떤 문제/불편함을 해결하려고 했나요?
