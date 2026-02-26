@@ -2,7 +2,7 @@
 ## 카테고리: 학습 앱
 
 ### 배포 링크
-[CS.zip 바로가기](https://gemini.google.com/share/295898912499)
+[CS.zip 바로가기](https://gemini.google.com/share/c9b076ba3057)
 
 ### 이 앱을 만든 이유
 - 어떤 문제/불편함을 해결하려고 했나요?

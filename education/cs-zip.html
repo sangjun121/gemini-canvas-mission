@@ -592,26 +592,36 @@
                     
                     aiContent.innerHTML = summaryText;
 
-                    // 3. 연관 문제 추천 (아카이브에 없는 같은 카테고리/개념의 문제 추출)
+                    // 3. 연관 문제 추천 (취약점과 관련된 문제 위주로 추출)
                     recsContainer.innerHTML = '';
                     let recommended = [];
                     
-                    // 우선 취약 개념과 일치하고 아카이브에 없는 문제 찾기
+                    // 1순위: 취약 개념과 정확히 일치하는 미풀이/미저장 문제
                     topConcepts.forEach(concept => {
                         const matchingQs = questionsDB.filter(q => q.concept === concept && !appState.archive.includes(q.id));
                         recommended.push(...matchingQs);
                     });
 
-                    // 중복 제거 및 무작위 섞기 후 2문제 선택
+                    // 2순위: 정확한 개념의 문제가 부족할 경우, 취약점이 속한 '카테고리'의 다른 문제 추천
+                    if (recommended.length < 2) {
+                        const weakCategories = [...new Set(topConcepts.map(c => questionsDB.find(q => q.concept === c)?.cat).filter(Boolean))];
+                        weakCategories.forEach(cat => {
+                            const categoryQs = questionsDB.filter(q => q.cat === cat && !appState.archive.includes(q.id) && !recommended.some(r => r.id === q.id));
+                            recommended.push(...categoryQs);
+                        });
+                    }
+
+                    // 중복 제거 및 무작위 섞기
                     recommended = [...new Set(recommended)];
                     this.shuffle(recommended);
                     recommended = recommended.slice(0, 2);
 
-                    // 추천 문제가 부족하면 그냥 랜덤 미풀이 문제 제공
+                    // 3순위 (데이터가 아예 없을 경우 대비): 취약 카테고리 내에서 이미 푼 문제라도 복습용으로 다시 제공
                     if(recommended.length === 0) {
-                        const allUnseen = questionsDB.filter(q => !appState.archive.includes(q.id));
-                        this.shuffle(allUnseen);
-                        recommended = allUnseen.slice(0, 2);
+                        const weakCategories = [...new Set(topConcepts.map(c => questionsDB.find(q => q.concept === c)?.cat).filter(Boolean))];
+                        let reviewQs = questionsDB.filter(q => weakCategories.includes(q.cat));
+                        this.shuffle(reviewQs);
+                        recommended = reviewQs.slice(0, 2);
                     }
 
                     if(recommended.length > 0) {
