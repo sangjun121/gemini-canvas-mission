@@ -2,7 +2,7 @@
 ## 카테고리: 페어 프롬프트 릴레이
 
 ### 배포 링크
-[우아한 백코 바로가기](https://gemini.google.com/share/5402c6455c4d)
+[우아한 백코 바로가기](https://gemini.google.com/share/54885b8ac5b4)
 
 ### 이 앱을 만든 이유
 - 어떤 문제/불편함을 해결하려고 했나요?
