@@ -145,6 +145,12 @@
                     <!-- Options injected via JS -->
                 </div>
 
+                <!-- Explanation Box (Hidden by default) -->
+                <div id="quiz-explanation" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700 fade-in">
+                    <p class="font-bold text-blue-800 mb-1"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> 해설</p>
+                    <p id="quiz-explanation-text"></p>
+                </div>
+
                 <!-- Action -->
                 <div class="flex justify-end">
                     <button id="btn-next-question" onclick="app.nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hidden">
@@ -369,6 +375,8 @@
                     optionsContainer.appendChild(btn);
                 });
 
+                // 해설 박스 및 다음 문제 버튼 숨기기
+                document.getElementById('quiz-explanation').classList.add('hidden');
                 document.getElementById('btn-next-question').classList.add('hidden');
             },
 
@@ -396,6 +404,10 @@
                         btn.classList.add('opacity-50');
                     }
                 });
+
+                // 해설 표시
+                document.getElementById('quiz-explanation-text').innerText = q.exp;
+                document.getElementById('quiz-explanation').classList.remove('hidden');
 
                 const nextBtn = document.getElementById('btn-next-question');
                 if (appState.currentIndex === appState.activeQuiz.length - 1) {
