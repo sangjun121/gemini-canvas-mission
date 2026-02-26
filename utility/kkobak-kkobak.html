@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영양제 & 물 습관 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased">
+
+    <!-- Main App Container -->
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg relative pb-20">
+        <!-- Header -->
+        <header class="pt-8 pb-4 px-6 bg-white sticky top-0 z-10 border-b border-slate-100">
+            <h1 class="text-2xl font-bold text-slate-800">오늘의 건강 습관</h1>
+            <p class="text-sm text-slate-500 mt-1" id="currentDate">날짜 로딩중...</p>
+        </header>
+
+        <main class="p-6 space-y-6">
+            
+            <!-- Water Tracker Section -->
+            <section class="bg-blue-50 rounded-3xl p-6 border border-blue-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-blue-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12.5V10c0-4.418-4.03-8-9-8s-9 3.582-9 8v2.5c0 4.418 4.03 8 9 8s9-3.582 9-8z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22v-3"></path></svg>
+                        수분 섭취량
+                    </h2>
+                    <button onclick="openWaterGoalModal()" class="text-xs text-blue-600 bg-blue-100 px-3 py-1.5 rounded-full font-medium hover:bg-blue-200 transition">
+                        목표 수정
+                    </button>
+                </div>
+
+                <div class="flex justify-between items-end mb-3">
+                    <div class="flex items-end gap-2">
+                        <span class="text-4xl font-extrabold text-blue-600" id="waterCurrentDisplay">0</span>
+                        <span class="text-slate-500 font-medium mb-1">/ <span id="waterGoalDisplay">2000</span> ml</span>
+                    </div>
+                    <!-- 목표 달성 축하 메시지 (기본 숨김) -->
+                    <div id="waterSuccessMsg" class="hidden text-sm font-bold text-teal-600 bg-teal-50 px-3 py-1.5 rounded-full mb-1 animate-pulse flex items-center gap-1 border border-teal-100 shadow-sm">
+                        <span>🎉</span> 목표 달성!
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="h-3 w-full bg-blue-100 rounded-full overflow-hidden mb-5">
+                    <div id="waterProgressBar" class="h-full bg-blue-500 transition-all duration-500 ease-out" style="width: 0%;"></div>
+                </div>
+
+                <!-- Quick Add Buttons -->
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="addWater(100)" class="py-2 bg-white rounded-xl text-sm font-medium text-blue-700 shadow-sm border border-blue-100 hover:bg-blue-50 active:scale-95 transition">+100ml</button>
+                    <button onclick="addWater(250)" class="py-2 bg-white rounded-xl text-sm font-medium text-blue-700 shadow-sm border border-blue-100 hover:bg-blue-50 active:scale-95 transition">+250ml</button>
+                    <button onclick="openWaterCustomModal()" class="py-2 bg-white rounded-xl text-sm font-medium text-blue-700 shadow-sm border border-blue-100 hover:bg-blue-50 active:scale-95 transition">직접입력</button>
+                </div>
+            </section>
+
+            <!-- Supplements Section -->
+            <section>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">영양제 & 약 복용</h2>
+                    <button onclick="openSupplementModal('add')" class="text-sm text-white bg-slate-800 px-4 py-2 rounded-xl font-medium hover:bg-slate-700 active:scale-95 transition flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        추가
+                    </button>
+                </div>
+
+                <!-- Timeline / Categories -->
+                <div id="supplementsTimeline" class="space-y-4">
+                    <!-- Morning -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="bg-orange-50 px-4 py-3 border-b border-orange-100 flex items-center gap-2">
+                            <span class="text-orange-500 text-lg">🌅</span>
+                            <h3 class="font-bold text-orange-900">아침</h3>
+                        </div>
+                        <ul id="list-morning" class="divide-y divide-slate-100 px-2">
+                            <!-- Items injected here -->
+                        </ul>
+                    </div>
+
+                    <!-- Lunch -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="bg-yellow-50 px-4 py-3 border-b border-yellow-100 flex items-center gap-2">
+                            <span class="text-yellow-500 text-lg">☀️</span>
+                            <h3 class="font-bold text-yellow-900">점심</h3>
+                        </div>
+                        <ul id="list-lunch" class="divide-y divide-slate-100 px-2">
+                             <!-- Items injected here -->
+                        </ul>
+                    </div>
+
+                    <!-- Dinner -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex items-center gap-2">
+                            <span class="text-indigo-500 text-lg">🌙</span>
+                            <h3 class="font-bold text-indigo-900">저녁</h3>
+                        </div>
+                        <ul id="list-dinner" class="divide-y divide-slate-100 px-2">
+                             <!-- Items injected here -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Empty State Guide -->
+                <div id="supplementsEmptyState" class="hidden bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center mt-2">
+                    <div class="text-4xl mb-3">💊</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">첫 영양제를 등록해보세요!</h3>
+                    <p class="text-sm text-slate-500 mb-6">매일 챙겨 먹는 영양제나 약을 등록하면<br>시간대별로 잊지 않고 관리할 수 있어요.</p>
+                    <button onclick="openSupplementModal('add')" class="inline-flex items-center justify-center gap-2 bg-slate-800 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-700 transition active:scale-95">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        영양제 추가하기
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals (Hidden by default) -->
+
+    <!-- Supplement Modal (Add/Edit) -->
+    <div id="supplementModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 w-11/12 max-w-sm shadow-2xl transform scale-95 transition-transform duration-300">
+            <h3 id="suppModalTitle" class="text-xl font-bold text-slate-800 mb-5">영양제 등록</h3>
+            <input type="hidden" id="suppId">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">복용 시간대</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="suppTime" value="morning" class="peer sr-only" checked>
+                            <div class="text-center py-2 px-3 rounded-xl border border-slate-200 peer-checked:bg-orange-100 peer-checked:border-orange-400 peer-checked:text-orange-700 transition">아침</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="suppTime" value="lunch" class="peer sr-only">
+                            <div class="text-center py-2 px-3 rounded-xl border border-slate-200 peer-checked:bg-yellow-100 peer-checked:border-yellow-400 peer-checked:text-yellow-700 transition">점심</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="suppTime" value="dinner" class="peer sr-only">
+                            <div class="text-center py-2 px-3 rounded-xl border border-slate-200 peer-checked:bg-indigo-100 peer-checked:border-indigo-400 peer-checked:text-indigo-700 transition">저녁</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">영양제 이름</label>
+                    <input type="text" id="suppName" placeholder="예: 비타민 C" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">1회 복용량</label>
+                    <input type="text" id="suppDosage" placeholder="예: 1알, 200mg" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal('supplementModal')" class="flex-1 py-3 bg-slate-100 text-slate-600 font-medium rounded-xl hover:bg-slate-200 transition">취소</button>
+                <button onclick="saveSupplement()" class="flex-1 py-3 bg-slate-800 text-white font-medium rounded-xl hover:bg-slate-700 transition">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Water Goal Modal -->
+    <div id="waterGoalModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 w-11/12 max-w-sm shadow-2xl transform scale-95 transition-transform duration-300">
+            <h3 class="text-xl font-bold text-slate-800 mb-2">목표 수분 섭취량</h3>
+            <p class="text-sm text-slate-500 mb-5">하루에 마실 목표량(ml)을 설정하세요.</p>
+            
+            <div class="relative">
+                <input type="number" id="waterGoalInput" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-bold text-center pr-12">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">ml</span>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal('waterGoalModal')" class="flex-1 py-3 bg-slate-100 text-slate-600 font-medium rounded-xl hover:bg-slate-200 transition">취소</button>
+                <button onclick="saveWaterGoal()" class="flex-1 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition">설정하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Water Add Modal -->
+    <div id="waterCustomModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 w-11/12 max-w-sm shadow-2xl transform scale-95 transition-transform duration-300">
+            <h3 class="text-xl font-bold text-slate-800 mb-2">수분 섭취 직접 입력</h3>
+            
+            <div class="relative mt-4">
+                <input type="number" id="waterCustomInput" placeholder="0" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-bold text-center pr-12">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">ml</span>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal('waterCustomModal')" class="flex-1 py-3 bg-slate-100 text-slate-600 font-medium rounded-xl hover:bg-slate-200 transition">취소</button>
+                <button onclick="saveCustomWater()" class="flex-1 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition">추가하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Confirmation Modal (Delete etc) -->
+    <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 w-11/12 max-w-sm shadow-2xl transform scale-95 transition-transform duration-300 text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">정말 삭제하시겠습니까?</h3>
+            <p class="text-sm text-slate-500 mb-6">삭제된 기록은 복구할 수 없습니다.</p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal('confirmModal')" class="flex-1 py-3 bg-slate-100 text-slate-600 font-medium rounded-xl hover:bg-slate-200 transition">취소</button>
+                <button id="confirmBtn" class="flex-1 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management (In-Memory for current session) ---
+        let state = {
+            water: {
+                goal: 2000,
+                current: 0
+            },
+            supplements: []
+        };
+
+        // --- Initialization ---
+        function init() {
+            setTodayDate();
+            renderWater();
+            renderSupplements();
+        }
+
+        function setTodayDate() {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ko-KR', options);
+        }
+
+        // --- Water Logic ---
+        function renderWater() {
+            document.getElementById('waterCurrentDisplay').textContent = state.water.current;
+            document.getElementById('waterGoalDisplay').textContent = state.water.goal;
+            
+            let percentage = (state.water.current / state.water.goal) * 100;
+            const successMsg = document.getElementById('waterSuccessMsg');
+            const progressBar = document.getElementById('waterProgressBar');
+
+            // 목표 달성 시 시각적 효과 (문구 표시 및 프로그레스 바 색상 변경)
+            if (percentage >= 100) {
+                percentage = 100;
+                successMsg.classList.remove('hidden');
+                progressBar.classList.remove('bg-blue-500');
+                progressBar.classList.add('bg-teal-500');
+            } else {
+                successMsg.classList.add('hidden');
+                progressBar.classList.remove('bg-teal-500');
+                progressBar.classList.add('bg-blue-500');
+            }
+
+            progressBar.style.width = percentage + '%';
+        }
+
+        function addWater(amount) {
+            state.water.current += amount;
+            renderWater();
+        }
+
+        function openWaterGoalModal() {
+            document.getElementById('waterGoalInput').value = state.water.goal;
+            openModal('waterGoalModal');
+        }
+
+        function saveWaterGoal() {
+            const input = parseInt(document.getElementById('waterGoalInput').value);
+            if (input && input > 0) {
+                state.water.goal = input;
+                renderWater();
+                closeModal('waterGoalModal');
+            }
+        }
+
+        function openWaterCustomModal() {
+            document.getElementById('waterCustomInput').value = '';
+            openModal('waterCustomModal');
+        }
+
+        function saveCustomWater() {
+            const input = parseInt(document.getElementById('waterCustomInput').value);
+            if (input && input > 0) {
+                addWater(input);
+                closeModal('waterCustomModal');
+            }
+        }
+
+        // --- Supplement Logic ---
+        function renderSupplements() {
+            const times = ['morning', 'lunch', 'dinner'];
+            const emptyState = document.getElementById('supplementsEmptyState');
+            const timeline = document.getElementById('supplementsTimeline');
+
+            // 등록된 영양제가 없을 때 빈 화면 가이드 표시
+            if (state.supplements.length === 0) {
+                emptyState.classList.remove('hidden');
+                timeline.classList.add('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                timeline.classList.remove('hidden');
+            }
+            
+            times.forEach(time => {
+                const listEl = document.getElementById(`list-${time}`);
+                listEl.innerHTML = '';
+                
+                const items = state.supplements.filter(s => s.time === time);
+                
+                if (items.length === 0) {
+                    listEl.innerHTML = `<li class="py-4 text-center text-sm text-slate-400">등록된 영양제가 없습니다.</li>`;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = "py-3 px-2 flex items-center justify-between group";
+                    li.innerHTML = `
+                        <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleSupplement('${item.id}')">
+                            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${item.taken ? 'bg-green-500 border-green-500' : 'border-slate-300'}">
+                                ${item.taken ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                            </div>
+                            <div>
+                                <p class="font-medium ${item.taken ? 'text-slate-400 line-through' : 'text-slate-800'}">${item.name}</p>
+                                <p class="text-xs ${item.taken ? 'text-slate-300' : 'text-slate-500'}">${item.dosage}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <button onclick="openSupplementModal('edit', '${item.id}')" class="p-2 text-slate-400 hover:text-blue-500 transition rounded-lg hover:bg-slate-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="confirmDelete('${item.id}')" class="p-2 text-slate-400 hover:text-red-500 transition rounded-lg hover:bg-slate-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    listEl.appendChild(li);
+                });
+            });
+        }
+
+        function toggleSupplement(id) {
+            const item = state.supplements.find(s => s.id === id);
+            if (item) {
+                item.taken = !item.taken;
+                renderSupplements();
+            }
+        }
+
+        function openSupplementModal(mode, id = null) {
+            document.getElementById('suppName').value = '';
+            document.getElementById('suppDosage').value = '';
+            
+            if (mode === 'add') {
+                document.getElementById('suppModalTitle').textContent = '영양제 등록';
+                document.getElementById('suppId').value = '';
+                document.querySelector(`input[name="suppTime"][value="morning"]`).checked = true;
+            } else if (mode === 'edit') {
+                document.getElementById('suppModalTitle').textContent = '영양제 수정';
+                const item = state.supplements.find(s => s.id === id);
+                if (item) {
+                    document.getElementById('suppId').value = item.id;
+                    document.getElementById('suppName').value = item.name;
+                    document.getElementById('suppDosage').value = item.dosage;
+                    document.querySelector(`input[name="suppTime"][value="${item.time}"]`).checked = true;
+                }
+            }
+            openModal('supplementModal');
+        }
+
+        function saveSupplement() {
+            const id = document.getElementById('suppId').value;
+            const name = document.getElementById('suppName').value.trim();
+            const dosage = document.getElementById('suppDosage').value.trim();
+            const time = document.querySelector('input[name="suppTime"]:checked').value;
+
+            if (!name || !dosage) return; // Basic validation
+
+            if (id) {
+                // Edit
+                const index = state.supplements.findIndex(s => s.id === id);
+                if (index > -1) {
+                    state.supplements[index].name = name;
+                    state.supplements[index].dosage = dosage;
+                    state.supplements[index].time = time;
+                }
+            } else {
+                // Add
+                const newItem = {
+                    id: Date.now().toString(),
+                    time: time,
+                    name: name,
+                    dosage: dosage,
+                    taken: false
+                };
+                state.supplements.push(newItem);
+            }
+
+            renderSupplements();
+            closeModal('supplementModal');
+        }
+
+        function confirmDelete(id) {
+            const btn = document.getElementById('confirmBtn');
+            btn.onclick = function() {
+                state.supplements = state.supplements.filter(s => s.id !== id);
+                renderSupplements();
+                closeModal('confirmModal');
+            };
+            openModal('confirmModal');
+        }
+
+        // --- Modal Utility ---
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            
+            modal.classList.remove('hidden');
+            // Trigger reflow
+            void modal.offsetWidth;
+            
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Matches transition duration
+        }
+
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal(this.id);
+                }
+            });
+        });
+
+        // Start app
+        init();
+    </script>
+</body>
+</html>
